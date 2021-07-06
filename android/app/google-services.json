@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "964916214307",
+    "project_id": "comet-messenger-dc37b",
+    "storage_bucket": "comet-messenger-dc37b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964916214307:android:7c3147e6c188f3cf928f96",
+        "android_client_info": {
+          "package_name": "com.dannyhyatt.cometmessenger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "964916214307-vcu6raqq76h5j6i19nv27njh52v3emv9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dannyhyatt.cometmessenger",
+            "certificate_hash": "af864051cdc5532cf77d755ad582c2e5f95dfa6b"
+          }
+        },
+        {
+          "client_id": "964916214307-pfnrkji42djueciq1p5bmkvb62edc53e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOTzBsjxaOQVP5gWyNYk36cr7nPDsaK2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "964916214307-pfnrkji42djueciq1p5bmkvb62edc53e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
