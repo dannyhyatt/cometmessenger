@@ -34,6 +34,8 @@ dependencies:
   get: ^4.1.4
   pin_code_fields: ^7.2.0
   cloud_firestore: ^2.3.0
+  flutter_chat_bubble: ^1.0.2
+  flutter_contacts: ^1.1.0+3
 
 dev_dependencies:
   flutter_test:

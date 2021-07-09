@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cometmessenger/chat_screen.dart';
+import 'package:cometmessenger/create_chats_page.dart';
 import 'package:cometmessenger/login_page.dart';
 import 'package:cometmessenger/statics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,14 +25,22 @@ class _ChatsListState extends State<ChatsList> {
     super.initState();
         () async {
       await Firebase.initializeApp();
+      debugPrint('no');
       FirebaseAuth auth = FirebaseAuth.instance;
+      // if(!kReleaseMode) {
+      //   debugPrint("YES");
+      //   // auth.useAuthEmulator("10.0.2.2", 9099);
+      //   // FirebaseFirestore.instance.useFirestoreEmulator("10.0.2.2", 8080);
+      // }
       auth.authStateChanges()
           .listen((User? user) {
         if (user == null) {
           // user isn't logged in
-          Get.to(LoginScreen());
+          debugPrint('user not logged in');
+          Get.to(() => LoginScreen());
         }  else {
           // user is logged in
+          debugPrint('user logged in');
           Statics.currentUserPhone = user.phoneNumber;
           setState(() {
             loggedIn = true;
@@ -49,11 +60,14 @@ class _ChatsListState extends State<ChatsList> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         centerTitle: true,
         title: Text('comet'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Get.to(() => CreateChatPage());
+        },
         child: Icon(Icons.add),
       ),
       body: FutureBuilder<bool>(
@@ -82,7 +96,9 @@ class _ChatsListState extends State<ChatsList> {
                     itemCount: snapshot.data!.docs.length,
                     itemBuilder: (ctx, index) {
                       return ListTile(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(docRef: snapshot.data!.docs[index].reference)));
+                        },
                         contentPadding: EdgeInsets.zero,
                         leading: SizedBox(
                           width: 96,
@@ -90,7 +106,7 @@ class _ChatsListState extends State<ChatsList> {
                           child: Padding(
                             padding: EdgeInsets.all(4),
                             // that's for group chats
-                            // child: Image.network(snapshot.data!.docs[index]['img_url']),
+                            child: Image.network(snapshot.data!.docs[index]['img_url']),
                           )
                         ),
                         // you have to get the reference separately
@@ -99,11 +115,24 @@ class _ChatsListState extends State<ChatsList> {
                         // isn't the users phone number
                         // and group chats will have a name field
                         // so check if theres more than two members to know if it's a group chat
+                        // todo fix the weird flash in the beginning
                         title: FutureBuilder<DocumentSnapshot>(
-                          future: snapshot.data!.docs[index]['members_references'][0].get(),
+                          future: snapshot.data?.docs[index]['members_references'][0].get(),
                           builder: (context, doc) {
-                            return Text(doc.data!['name']);
-                          }
+                            if(doc.hasError) return Text('Error');
+                            if(!doc.hasData) return Text('Loading...');
+                            debugPrint('text is: ${doc.data?.get('name')}');
+                            return Text(doc.data!.get('name'));
+                          },
+                        ),
+                        subtitle: FutureBuilder<DocumentSnapshot>(
+                          future: snapshot.data?.docs[index]['last_message'].get(),
+                          builder: (context, doc) {
+                            if(doc.hasError) return Text('Error');
+                            if(!doc.hasData) return Text('Loading...');
+                            debugPrint('text is: ${doc.data?.get('content')}');
+                            return Text(doc.data!.get('content'));
+                          },
                         ),
                       );
                     }

@@ -34,6 +34,7 @@ class LoginScreen extends StatelessWidget {
                     cursorColor: Colors.white
                 ),
                 child: IntlPhoneField(
+
                   onChanged: (PhoneNumber p){
                     this.phone = p;
                   },
@@ -67,7 +68,7 @@ class LoginScreen extends StatelessWidget {
                 await FirebaseAuth.instance.verifyPhoneNumber(
                   phoneNumber: phone!.completeNumber,
                   verificationCompleted: (PhoneAuthCredential credential) {
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => ChatsList()));
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatsList()));
                   },
                   verificationFailed: (FirebaseAuthException e) {
                     if (e.code == 'invalid-phone-number') {
@@ -129,6 +130,7 @@ class CodeInputScreen extends StatelessWidget {
                   onChanged: (c) {
                     this.code = c;
                   },
+                  keyboardType: TextInputType.number,
                   pinTheme: PinTheme(
                     shape: PinCodeFieldShape.underline,
                     activeColor: Colors.white,
