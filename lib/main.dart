@@ -13,9 +13,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Flutter Demo',
+      title: 'Comet Messenger',
       theme: ThemeData(
         primarySwatch: Colors.indigo,
+        cursorColor: Colors.white
       ),
       home: ChatsList(),
     );

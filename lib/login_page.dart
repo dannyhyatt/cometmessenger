@@ -31,10 +31,9 @@ class LoginScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
               child: Theme(
                 data: ThemeData(
-                    cursorColor: Colors.white
+                    cursorColor: Colors.white // todo
                 ),
                 child: IntlPhoneField(
-
                   onChanged: (PhoneNumber p){
                     this.phone = p;
                   },
@@ -65,27 +64,47 @@ class LoginScreen extends StatelessWidget {
               backgroundColor: Colors.white,
               onPressed: () async {
                 if(phone == null) return;
-                await FirebaseAuth.instance.verifyPhoneNumber(
-                  phoneNumber: phone!.completeNumber,
-                  verificationCompleted: (PhoneAuthCredential credential) {
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatsList()));
-                  },
-                  verificationFailed: (FirebaseAuthException e) {
-                    if (e.code == 'invalid-phone-number') {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invalid phone number}")));
-                      return;
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: ${e.message}")));
-                  },
-                  codeSent: (String? verificationId, int? resendToken) async {
-                    final result = await Navigator.push(
-                      context,
-                      // Create the SelectionScreen in the next step.
-                      MaterialPageRoute(builder: (context) => CodeInputScreen(verificationId!)),
-                    );
-                  },
-                  codeAutoRetrievalTimeout: (String verificationId) {},
-                );
+                if(!kIsWeb) {
+                  await FirebaseAuth.instance.verifyPhoneNumber(
+                    phoneNumber: phone!.completeNumber,
+                    verificationCompleted: (PhoneAuthCredential credential) {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatsList()));
+                    },
+                    verificationFailed: (FirebaseAuthException e) {
+                      if (e.code == 'invalid-phone-number') {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invalid phone number}")));
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: ${e.message}")));
+                    },
+                    codeSent: (String? verificationId, int? resendToken) async {
+                      final result = await Navigator.push(
+                        context,
+                        // Create the SelectionScreen in the next step.
+                        MaterialPageRoute(builder: (context) => CodeInputScreen(verificationId!)),
+                      );
+                    },
+                    codeAutoRetrievalTimeout: (String verificationId) {},
+                  );
+                } else {
+                  ConfirmationResult confirmationResult = await FirebaseAuth.instance.signInWithPhoneNumber(phone!.completeNumber,
+                      // todo this doesnt work f
+                      // RecaptchaVerifier(
+                      //   container: 'recaptcha',
+                      //   size: RecaptchaVerifierSize.compact,
+                      //   theme: RecaptchaVerifierTheme.dark,
+                      //   // todo actually look at this stuff
+                      //   onSuccess: () => print('reCAPTCHA Completed!'),
+                      //   onError: (FirebaseAuthException error) => print(error),
+                      //   onExpired: () => print('reCAPTCHA Expired!'),
+                      // )
+                  );
+                  final result = await Navigator.push(
+                    context,
+                    // Create the SelectionScreen in the next step.
+                    MaterialPageRoute(builder: (context) => CodeInputScreen('', confirmationResult: confirmationResult)),
+                  );
+                }
               },
             )
           ],
@@ -99,8 +118,9 @@ class CodeInputScreen extends StatelessWidget {
 
   String code = '';
   late String verificationId;
+  ConfirmationResult? confirmationResult;
 
-  CodeInputScreen(this.verificationId);
+  CodeInputScreen(this.verificationId, {this.confirmationResult});
 
   @override
   Widget build(BuildContext context) {
@@ -153,9 +173,13 @@ class CodeInputScreen extends StatelessWidget {
               child: Icon(Icons.navigate_next, color: Colors.indigo),
               backgroundColor: Colors.white,
               onPressed: () async {
-                PhoneAuthCredential authCredential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: this.code);
-                UserCredential credential = await FirebaseAuth.instance.signInWithCredential(authCredential);
-                debugPrint('success!');
+                if(!kIsWeb) {
+                  PhoneAuthCredential authCredential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: this.code);
+                  UserCredential credential = await FirebaseAuth.instance.signInWithCredential(authCredential);
+                  debugPrint('success!');
+                } else {
+                  await confirmationResult!.confirm(this.code);
+                }
                 Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => ChatsList()));
               },
             )

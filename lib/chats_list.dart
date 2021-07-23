@@ -1,10 +1,15 @@
+// import 'dart:html';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cometmessenger/chat_screen.dart';
 import 'package:cometmessenger/create_chats_page.dart';
+import 'package:cometmessenger/edit_profile_page.dart';
 import 'package:cometmessenger/login_page.dart';
 import 'package:cometmessenger/statics.dart';
+import 'package:cometmessenger/video_chat_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -41,13 +46,51 @@ class _ChatsListState extends State<ChatsList> {
         }  else {
           // user is logged in
           debugPrint('user logged in');
+          // wont work unless compiling for web
+          // if(kIsWeb) {
+          //   final el = window.document.getElementById('__ff-recaptcha-container');
+          //   if (el != null) {
+          //     el.style.visibility = 'hidden';
+          //   }
+          // }
           Statics.currentUserPhone = user.phoneNumber;
           setState(() {
             loggedIn = true;
           });
         }
       });
-    }();
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+      NotificationSettings settings = await messaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+
+      print('User granted permission: ${settings.authorizationStatus}');
+
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('Got a message whilst in the foreground!');
+        print('Message data: ${message.data}');
+
+        if (message.notification != null) {
+          print('Message also contained a notification: ${message.notification!.title}');
+          // Get.showSnackbar(snackbar)
+        }
+      });
+
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+      }();
+  }
+
+  Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+
+    print("Handling a background message: ${message.messageId}: ${message.data}");
   }
 
   @override
@@ -62,7 +105,10 @@ class _ChatsListState extends State<ChatsList> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         centerTitle: true,
-        title: Text('comet'),
+        title: Text('chats'),
+        actions: [
+          IconButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => EditProfilePage())), icon: Icon(Icons.person))
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -134,6 +180,12 @@ class _ChatsListState extends State<ChatsList> {
                             return Text(doc.data!.get('content'));
                           },
                         ),
+                        trailing: !doesHaveCallOffer(snapshot.data?.docs[index]) ? null
+                            : IconButton(
+                                onPressed: () {
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => VideoChatCard(chatDoc: snapshot.data!.docs[index].reference, isCalling: false,)));
+                                },
+                                icon: Icon(Icons.videocam), color: Colors.green),
                       );
                     }
                   );
@@ -165,8 +217,21 @@ class _ChatsListState extends State<ChatsList> {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     await firestore.collection('/users').doc('/${Statics.currentUserPhone}').set({
       "img_url": 'https://img.icons8.com/pastel-glyph/2x/person-male.png',
-      "name" : 'Comet User'
+      "name" : 'Comet User',
+      "fcm_token" : [await FirebaseMessaging.instance.getToken()],
     });
     return true;
+  }
+
+  // for some reason the .get method doesnt return null it throws an error
+  // which is so stupid because there's not even a way to check if
+  // a field exists or not in a nosql database
+  bool doesHaveCallOffer(DocumentSnapshot? ds) {
+    try {
+      ds!.get('call_offer');
+      return true;
+    } catch(_) {
+      return false;
+    }
   }
 }

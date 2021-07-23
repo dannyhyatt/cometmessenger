@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cometmessenger/statics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -27,11 +28,13 @@ class _CreateChatPageState extends State<CreateChatPage> {
   void initState() {
     super.initState();
 
-    FlutterContacts.requestPermission().then((hasPermission){
-      if(hasPermission) {
-        FlutterContacts.getContacts().then((value) => contacts = value);
-      }
-    });
+    if(!kIsWeb) {
+      FlutterContacts.requestPermission().then((hasPermission) {
+        if (hasPermission) {
+          FlutterContacts.getContacts().then((value) => contacts = value);
+        }
+      });
+    }
   }
 
   @override
@@ -70,7 +73,7 @@ class _CreateChatPageState extends State<CreateChatPage> {
       ),
       body: ListView.builder(
         key: GlobalKey(),
-        itemCount: phoneNumber == '' ? 0 : null,
+        itemCount: phoneNumber == '' ? 0 : contacts.length + 1,
         itemBuilder: (ctx, index) {
           index -= 1;
           if(index == -1) {
@@ -95,7 +98,7 @@ class _CreateChatPageState extends State<CreateChatPage> {
           }
           return Container(
             height: 20,
-            color: Colors.amber,
+            color: Colors.transparent,
             width: 20,
           );
         },

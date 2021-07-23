@@ -36,10 +36,23 @@ dependencies:
   cloud_firestore: ^2.3.0
   flutter_chat_bubble: ^1.0.2
   flutter_contacts: ^1.1.0+3
+  firebase_messaging: ^10.0.3
+  flutter_webrtc: ^0.6.5
+  sdp_transform: ^0.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: "^0.8.0"
+
+flutter_icons:
+  android: "launcher_icon"
+#  ios: true
+#  image_path: "assets/icon/icon.png"
+  image_path_ios: "asset/logo.png"
+  image_path_android: "asset/logo_adaptive.png"
+  adaptive_icon_background: '#3f51b5'
+  adaptive_icon_foreground: "asset/logo.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cometmessenger/statics.dart';
+import 'package:cometmessenger/video_chat_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_bubble/bubble_type.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
@@ -51,6 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
           );
         }
         return Scaffold(
+          key: GlobalKey(),
           appBar: AppBar(
             title: FutureBuilder<String>(
               future: getChatName(chatSnapshot.data!),
@@ -62,6 +64,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 return Text(snapshot.data!);
               }
             ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.videocam),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => VideoChatCard(chatDoc: chatSnapshot.data!.reference, isCalling: true,)));
+                },
+              )
+            ],
           ),
           body: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance.collection('messages').where('to_chat', isEqualTo: widget.docRef).orderBy('sent').snapshots(),
@@ -114,6 +124,29 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(4),
                     child: TextField(
+                      key: GlobalKey(),
+                      onSubmitted: (text) {
+                        (!sendEnabled ? (){} : () async {
+                          try {
+                            final msgRef = await FirebaseFirestore.instance.collection('messages').add({
+                              'from' : Statics.currentUserPhone,
+                              'content' : controller.text,
+                              'sent' : FieldValue.serverTimestamp(),
+                              'text' : true,
+                              'to_chat' : widget.docRef,
+                              'reactions' : []
+                            });
+                            widget.docRef.update({
+                              'last_message' : msgRef,
+                            });
+                            controller.text = '';
+                          } on Exception catch(e) {
+                            debugPrint(e.toString());
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error creating chat')));
+                          }
+                        })();
+                      },
+                      textInputAction: TextInputAction.newline,
                       controller: controller,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(),
@@ -166,11 +199,15 @@ class _ChatScreenState extends State<ChatScreen> {
     debugPrint('3');
     if(chatSnapshot.get('members_references').length == 2) {
       debugPrint('4');
-      int index = chatSnapshot.get('members_references')[0] == FirebaseFirestore.instance.collection('users').doc('${Statics.currentUserPhone}') ? 1 : 0;
-      return (await chatSnapshot.get('members_references')[index].get()).get('name');
+      return (await getOtherUsersDocRef(chatSnapshot).get()).get('name');
     }
     debugPrint('5');
     return 'Group chat';
 
+  }
+
+  DocumentReference getOtherUsersDocRef(DocumentSnapshot chatSnapshot) {
+    int index = chatSnapshot.get('members_references')[0] == FirebaseFirestore.instance.collection('users').doc('${Statics.currentUserPhone}') ? 1 : 0;
+    return chatSnapshot.get('members_references')[index];
   }
 }
